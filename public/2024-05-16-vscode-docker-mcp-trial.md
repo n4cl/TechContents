@@ -38,6 +38,25 @@ ignorePublish: false
 
 これらの条件を満たす組み合わせを探した結果、以下の構成にたどり着きました。
 
+```mermaid
+graph LR
+    subgraph "開発環境 (ローカルマシン)"
+        direction LR
+        User["ユーザー (私)"]
+        VSCode["VSCode<br>(MCPクライアント機能:<br>GitHub Copilot Agent Mode)"]
+
+        User -- "操作" --> VSCode
+        VSCode -- "MCP接続<br>(.vscode/mcp.jsonで設定)" --> GH_MCPServer_Container["GitHub MCP Server<br>(Dockerコンテナで実行)"]
+    end
+
+    GH_MCPServer_Container -- "GitHub API連携<br>(PATで認証)" --> GitHub["GitHub<br>(リポジトリ)"]
+
+    style User fill:#D6EAF8,stroke:#333
+    style VSCode fill:#D5F5E3,stroke:#333
+    style GH_MCPServer_Container fill:#FCF3CF,stroke:#333
+    style GitHub fill:#FDEDEC,stroke:#333
+```
+
 -   MCPクライアント: VSCode の GitHub Copilot Agent Mode
     -   理由1: 普段使っているエディタであること: 私は日常的にVSCodeを利用しており、新たなツールを導入することなく、使い慣れた環境で試せるのは大きな利点でした。
     -   理由2: Agent ModeによるMCPサポート (Preview): VSCode (GitHub Copilot拡張機能) にAgent Modeが導入され、プレビュー機能としてMCPサーバーとの連携をサポートしていることが[公式ドキュメント](https://code.visualstudio.com/docs/copilot/chat/mcp-servers)で発表されました。「普段のエディタでMCPが試せる」というのは、試用への心理的ハードルを大きく下げてくれたため、これが大きな決め手となりました。
