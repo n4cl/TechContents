@@ -1,12 +1,12 @@
 ---
 title: VSCodeとDockerでMCPを試してみた
 tags:
-  - 'VSCode'
-  - 'Docker'
-  - 'MCP'
+  - Docker
+  - VSCode
+  - MCP
 private: false
-updated_at: ''
-id: null
+updated_at: '2025-05-06T22:29:43+09:00'
+id: fb88aac3cfe5e2348992
 organization_url_name: null
 slide: false
 ignorePublish: false
