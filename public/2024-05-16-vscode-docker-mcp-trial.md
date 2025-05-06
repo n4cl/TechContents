@@ -78,13 +78,14 @@ graph LR
 
 この「VSCode + Docker + GitHub公式MCP Server」という組み合わせであれば、追加費用やクライアント/サーバー双方の実装が不要で、普段の開発環境から地続きでMCPの世界を体験できると判断し、この環境で試してみることにしました。
 
+
 ## 3. 実際に試したこと
 
 試用する環境として「VSCode と Docker 上の GitHub MCP Server」を選び、いよいよセットアップの開始です。
 
 大まかな流れとしては、まずGitHub側で必要な準備を行い、次にDockerでMCPサーバーコンテナの起動を確認（ここは少し試行錯誤がありました）、最後にVSCodeから接続するための設定、というステップで進めました。
 
-手順自体はそれほど複雑ではないはず…なのですが、実際に手を動かしてみると、特に GitHub MCP Server 周りの設定や起動で、ドキュメント通りにいかない部分や想定外の挙動にいくつか遭遇しました。新しいツールや組み合わせを試す際にはよくあることですが、その過程を正直に記録しておきます。
+手順自体はそれほど複雑ではないはずですが、実際に手を動かしてみると、特に GitHub MCP Server 周りの設定や起動で、ドキュメント通りにいかない部分や想定外の挙動にいくつか遭遇しました。その過程を記録しておきます。
 
 まずは、最初のステップであるGitHub側の準備から始めます。
 
@@ -92,15 +93,13 @@ graph LR
 
 まず、MCPサーバーからGitHubを操作するための準備として、以下の2点を行いました。
 
-1. 操作対象のリポジトリ作成:
-   MCPサーバーから実際にIssue作成などの操作を試すための対象として、GitHub上にリポジトリを準備しました。今回は `your-repo-name` という名前の空のリポジトリを手動で作成しました。（※ご自身の試用時には、任意のリポジトリ名に置き換えてください）
+1.  **操作対象のリポジトリ作成:**
+    MCPサーバーから実際にIssue作成などの操作を試すための対象として、GitHub上にリポジトリを準備しました。今回は `your-repo-name` という名前の空のリポジトリを手動で作成しました。（※ご自身の試用時には、任意のリポジトリ名に置き換えてください）
 
-2. Personal Access Token (PAT) の準備:
-   次に、GitHub MCP Server がこのリポジトリ (`your-repo-name`) と通信するために必要な認証情報、Personal Access Token (PAT) を準備します。
-   *   GitHub の [設定 > Developer settings > Personal access tokens > Fine-grained tokens](https://github.com/settings/personal-access-tokens) から新しいトークン（Fine-grained personal access token）を生成します。
-   *   トークン生成時には、MCPサーバーに実行させたい操作に必要な権限を選択します。Fine-grained tokens の利点として、アクセス許可を先ほど作成した `your-repo-name` リポジトリのみに限定できます。これにより、意図しないリポジトリへの操作を防ぐことができ、より安全です。
-   *   リポジトリに対する具体的な権限（例えば Issues の Read & Write など）を適切に設定し、権限は必要最小限にすることを推奨します。
-   *   生成されたトークン文字列は、一度しか表示されないので、必ず安全な場所にコピーしておきます。
+2.  **Personal Access Token (PAT) の準備:**
+    次に、GitHub MCP Server がこのリポジトリ (`your-repo-name`) と通信するために必要な認証情報、Personal Access Token (PAT) を準備します。
+    -   GitHub の 設定 > Developer settings > Personal access tokens > Fine-grained tokens ([https://github.com/settings/personal-access-tokens](https://github.com/settings/personal-access-tokens)) から新しいトークン（Fine-grained personal access token）を生成しました。
+    -   トークン生成時には、対象リポジトリを `your-repo-name` に限定し、必要な権限（今回は Issues の Read & Write）のみを選択しました。このように、権限は最小限に設定しました。
 
 ### 3.2. 事前確認: DockerでのGitHub MCP Server起動とツールセット指定
 
@@ -120,7 +119,7 @@ docker run -i --rm \
 ```
 *(YOUR_PAT_HERE は先ほど生成した PAT に置き換えます)*
 
-【いきなりエラー発生】
+**【いきなりエラー発生】**
 
 しかし、このコマンドを実行すると、期待に反して以下のようなエラーメッセージが表示され、起動に失敗してしまいました。 (GitHub MCP Server `v0.2.1` 時点)
 
@@ -129,15 +128,15 @@ docker run -i --rm \
 Failed to initialize toolsets: toolset issues,pull_requests does not exist
 ```
 
-【原因調査と解決策の発見 via GitHub Issues】
+**【原因調査と解決策の発見 via GitHub Issues】**
 
-「README通りのはずなのに…」と原因が分からなかったため、GitHubリポジトリ ([github/github-mcp-server](https://www.google.com/url?sa=E&q=https%3A%2F%2Fgithub.com%2Fgithub%2Fgithub-mcp-server)) の Issues を検索してみました。すると、まさに同じエラー (Failed to initialize toolsets: ... does not exist) を報告している Issue ([#307](https://www.google.com/url?sa=E&q=https%3A%2F%2Fgithub.com%2Fgithub%2Fgithub-mcp-server%2Fissues%2F307)) を発見しました。
+原因が分からなかったため、GitHubリポジトリ ([github/github-mcp-server](https://github.com/github/github-mcp-server)) の Issues を検索してみました。すると、まさに同じエラーを報告している Issue ([#307](https://github.com/github/github-mcp-server/issues/307)) を発見しました。
 
-このIssue (#307) は既にCloseされており、修正自体はリポジトリにマージされているようでしたが、私が試した最新リリース版 (v0.2.1) にはまだその修正が含まれていなかったようです。 そのため、依然として GITHUB_TOOLSETS 環境変数での指定が期待通りに機能しない状況でした。
+このIssue (#307) は既にCloseされており、修正自体はリポジトリにマージされているようでしたが、私が試した最新リリース版 (v0.2.1) にはまだその修正が含まれていなかったようです。 そのため、依然として GITHUB_TOOLSETS 環境変数での指定が期待通りに機能しない状況でした。
 
-幸いなことに、Issue内のコメントで回避策が共有されていました。 それは、環境変数ではなく、コマンドライン引数として --toolsets を使う方法でした。ただし、単純に引数を追加するだけでなく、Dockerコンテナ内で実行するコマンド (./github-mcp-server) とサブコマンド (stdio) を明示的に指定する必要があるとのことでした。
+幸いなことに、Issue内のコメントで回避策が共有されていました。 それは、環境変数ではなく、コマンドライン引数として `--toolsets` を使う方法でした。ただし、単純に引数を追加するだけでなく、Dockerコンテナ内で実行するコマンド (./github-mcp-server) とサブコマンド (stdio) を明示的に指定する必要があるとのことでした。
 
-【回避策の実行と成功】
+**【回避策の実行と成功】**
 
 Issueで提示されていた回避策に従い、以下のコマンド形式で実行してみたところ…
 
@@ -151,7 +150,7 @@ docker run -i --rm \
 
 今度は、無事に指定したツールセット（`issues`, `pull_requests`）でサーバーが起動することを確認できました！
 
-【補足: ツールセット指定なしの場合】
+**【補足: ツールセット指定なしの場合】**
 
 ちなみに、ツールセットを何も指定しない、最も基本的な以下のコマンドであれば、エラーなく起動することも確認しました。
 
@@ -165,7 +164,7 @@ docker run -i --rm \
 
 Dockerコンテナの起動確認はできましたが、本題はVSCodeからMCPサーバーを利用することです。
 
-【VSCode設定】
+**【VSCode設定】**
 
 セクション3.2の試行錯誤により、Dockerの手動実行では `./github-mcp-server stdio --toolsets ...` という形式でツールセットを指定できることが分かっていました。VSCodeの設定 (`.vscode/mcp.json`) でも `args` を使ってこれを再現しつつ、認証にはVSCodeの `inputs` 機能を利用するように組み立てました。
 
@@ -207,7 +206,7 @@ Dockerコンテナの起動確認はできましたが、本題はVSCodeからMC
 この設定ファイルをワークスペースの `.vscode` ディレクトリに保存し、VSCodeのコマンドパレット (`Ctrl+ShiftP` または `Cmd+Shift+P`) から `GitHub Copilot: Reload MCP Servers` を実行するか、VSCodeを再起動して設定を読み込ませます。
 `.gitignore` に `.vscode/mcp.json` を追加するなどして、設定ファイルが意図せずコミットされないように注意が必要です。
 
-【接続確認と実際の対話例】
+**【接続確認と実際の対話例】**
 
 設定を読み込ませた後、初めてこのMCPサーバー (`github`) を利用しようとすると、VSCodeの上部に `"inputs"` 設定に基づき「GitHub Personal Access Token」の入力を求めるプロンプトが表示されます。ここに取得しておいたPATを入力してEnterキーを押します。
 
