@@ -4,8 +4,8 @@ tags:
   - MCP
   - LLM
 private: false
-updated_at: ''
-id: null
+updated_at: '2025-05-08T21:15:42+09:00'
+id: 4dea9ae49c7703e6a338
 organization_url_name: null
 slide: false
 ignorePublish: false
